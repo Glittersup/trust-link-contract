@@ -141,19 +141,18 @@ impl Escrow {
     }
 
     /// Batch view: return escrows for the supplied IDs in the same order.
-    /// Missing IDs return None in the corresponding slot. Input is capped at
-    /// `MAX_MESSAGES_PER_PAGE` (50 IDs) to prevent resource exhaustion.
+    ///
+    /// - A missing ID yields `None` in its slot, so the result is positionally
+    ///   aligned with the (possibly truncated) input.
+    /// - Input is capped at `MAX_IDS_PER_QUERY` (50). IDs beyond the cap are
+    ///   **truncated**, not rejected: only the first `MAX_IDS_PER_QUERY` are
+    ///   looked up and the result has at most that many slots.
     pub fn get_escrows_by_ids(
         env: Env,
         ids: soroban_sdk::Vec<u64>,
     ) -> soroban_sdk::Vec<Option<EscrowData>> {
         let mut result: soroban_sdk::Vec<Option<EscrowData>> = soroban_sdk::Vec::new(&env);
-        let max_ids = u32::try_from(crate::MAX_MESSAGES_PER_PAGE).unwrap_or(u32::MAX);
-        let limit = if ids.len() > max_ids {
-            max_ids
-        } else {
-            ids.len()
-        };
+        let limit = ids.len().min(crate::MAX_IDS_PER_QUERY);
 
         for i in 0..limit {
             let Some(id) = ids.get(i) else {

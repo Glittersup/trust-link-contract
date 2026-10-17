@@ -241,6 +241,14 @@ pub const DEFAULT_SHIPPING_WINDOW: u64 = 3600;
 /// of the caller-supplied `limit`.
 pub const MAX_MESSAGES_PER_PAGE: u64 = 50;
 
+/// Maximum number of ids `get_escrows_by_ids` will look up in one call.
+///
+/// Independent of [`MAX_MESSAGES_PER_PAGE`]: id-batch size and message paging
+/// are unrelated concerns and can be tuned separately. Extra ids beyond the cap
+/// are silently **truncated** (the call never errors), so callers must send at
+/// most this many ids per request.
+pub const MAX_IDS_PER_QUERY: u32 = 50;
+
 /// Maximum number of escrow ids returned per page by `get_escrows_by_vendor`
 /// and `get_escrows_by_seller`, regardless of the caller-supplied `limit`.
 pub const MAX_ESCROWS_PER_PAGE: u64 = 50;

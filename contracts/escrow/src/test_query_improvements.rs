@@ -265,7 +265,7 @@ fn test_get_escrows_by_ids_respects_cap() {
         created_ids.push_back(id);
     }
 
-    // Build query with 60 IDs (exceeds MAX_MESSAGES_PER_PAGE = 50)
+    // Build query with 60 IDs (exceeds MAX_IDS_PER_QUERY = 50)
     let mut ids = Vec::new(&env);
     for i in 0..10 {
         ids.push_back(created_ids.get(i).unwrap());
