@@ -173,14 +173,34 @@ impl Escrow {
         read_fee_config(&env)
     }
 
-    /// Retrieves all escrow IDs associated with a specific vendor (seller).
-    pub fn get_escrows_by_vendor(env: Env, vendor: Address) -> Vec<u64> {
-        storage::read_vendor_escrow_index(&env, &vendor)
+    /// Retrieves a page of escrow IDs associated with a specific vendor
+    /// (seller).
+    ///
+    /// Ordering is **ascending** (oldest escrow first, i.e. creation order).
+    /// `start` is a zero-based offset into that list and `limit` is clamped to
+    /// `MAX_ESCROWS_PER_PAGE` (50). An out-of-range `start` or a zero `limit`
+    /// returns an empty `Vec`. To walk a full index, call repeatedly with
+    /// `start += returned.len()` until an empty page comes back.
+    pub fn get_escrows_by_vendor(env: Env, vendor: Address, start: u64, limit: u64) -> Vec<u64> {
+        storage::read_vendor_escrow_index_page(
+            &env,
+            &vendor,
+            start,
+            limit.min(crate::MAX_ESCROWS_PER_PAGE),
+        )
     }
 
-    /// Retrieves all escrow IDs associated with a specific seller.
-    pub fn get_escrows_by_seller(env: Env, seller: Address) -> Vec<u64> {
-        storage::read_vendor_escrow_index(&env, &seller)
+    /// Retrieves a page of escrow IDs associated with a specific seller.
+    ///
+    /// Alias of [`Self::get_escrows_by_vendor`]: same ascending (creation)
+    /// order, same `(start, limit)` semantics, same `MAX_ESCROWS_PER_PAGE` cap.
+    pub fn get_escrows_by_seller(env: Env, seller: Address, start: u64, limit: u64) -> Vec<u64> {
+        storage::read_vendor_escrow_index_page(
+            &env,
+            &seller,
+            start,
+            limit.min(crate::MAX_ESCROWS_PER_PAGE),
+        )
     }
 
     /// Returns on-chain counters for escrow lifecycle events.

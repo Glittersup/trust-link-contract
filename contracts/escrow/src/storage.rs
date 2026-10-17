@@ -383,6 +383,64 @@ pub fn read_vendor_escrow_index(env: &Env, vendor: &Address) -> Vec<u64> {
     result
 }
 
+/// Reads at most `limit` ids of `vendor`'s index starting at offset `start`
+/// (ascending, oldest first). Only the pages overlapping the window are loaded,
+/// so cost is proportional to the page size rather than the whole index.
+pub fn read_vendor_escrow_index_page(
+    env: &Env,
+    vendor: &Address,
+    start: u64,
+    limit: u64,
+) -> Vec<u64> {
+    let count = read_vendor_escrow_count(env, vendor);
+    let mut result = Vec::new(env);
+    if count == 0 {
+        // Pre-sharding deployments still hold a single flat vector.
+        let legacy = read_legacy_vendor_index(env, vendor);
+        let total = u64::from(legacy.len());
+        let end = start.saturating_add(limit).min(total);
+        let mut i = start;
+        while i < end {
+            let Ok(index) = u32::try_from(i) else { break };
+            if let Some(id) = legacy.get(index) {
+                result.push_back(id);
+            }
+            i += 1;
+        }
+        return result;
+    }
+    let total = u64::from(count);
+    if start >= total || limit == 0 {
+        return result;
+    }
+    let end = start.saturating_add(limit).min(total);
+    let page_size = u64::from(crate::ESCROW_INDEX_PAGE_SIZE);
+    let mut i = start;
+    while i < end {
+        let Ok(page_idx) = u32::try_from(i / page_size) else {
+            break;
+        };
+        let key = DataKey::VendorEscrow(vendor.clone(), page_idx);
+        let page_end = ((i / page_size) + 1) * page_size;
+        if let Some(page) = env.storage().persistent().get::<DataKey, Vec<u64>>(&key) {
+            extend_ttl_for_key(env, &key);
+            let mut j = i;
+            while j < end.min(page_end) {
+                // `j % page_size` is below the u32 page size.
+                let Ok(offset) = u32::try_from(j % page_size) else {
+                    break;
+                };
+                if let Some(id) = page.get(offset) {
+                    result.push_back(id);
+                }
+                j += 1;
+            }
+        }
+        i = end.min(page_end);
+    }
+    result
+}
+
 /// Overwrites `vendor`'s index with `escrow_ids`, re-sharding it into pages.
 pub fn write_vendor_escrow_index(env: &Env, vendor: &Address, escrow_ids: &Vec<u64>) {
     clear_pages(

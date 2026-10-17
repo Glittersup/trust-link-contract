@@ -285,7 +285,7 @@ fn test_vendor_index_ttl_extended_on_write() {
     env.ledger().set(ledger_info);
 
     // Vendor index must still be queryable — TTL was extended on write.
-    let escrows = client.get_escrows_by_vendor(&seller);
+    let escrows = client.get_escrows_by_vendor(&seller, &0_u64, &50_u64);
     assert_eq!(
         escrows.len(),
         1,
@@ -311,7 +311,7 @@ fn test_vendor_index_ttl_extended_on_read() {
     );
 
     // First read at current ledger — this extends TTL on read.
-    let escrows_before = client.get_escrows_by_vendor(&seller);
+    let escrows_before = client.get_escrows_by_vendor(&seller, &0_u64, &50_u64);
     assert_eq!(escrows_before.len(), 1);
 
     // Advance by DEFAULT_TTL_EXTENSION - 1 (entry was refreshed by the read above
@@ -321,7 +321,7 @@ fn test_vendor_index_ttl_extended_on_read() {
     env.ledger().set(ledger_info);
 
     // Re-read: entry must still be accessible.
-    let escrows_after = client.get_escrows_by_vendor(&seller);
+    let escrows_after = client.get_escrows_by_vendor(&seller, &0_u64, &50_u64);
     assert_eq!(
         escrows_after.len(), 1,
         "vendor index was archived after ledger advance even though TTL should have been refreshed on read"

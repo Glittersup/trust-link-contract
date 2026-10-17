@@ -138,7 +138,8 @@ on `EscrowClient` (hover in your editor).
 | `post_message(escrowId, sender, content)` / `get_messages(escrowId, start, limit)` | Escrow message thread |
 | `get_escrow(escrowId)` | Read the full `EscrowData` record |
 | `get_dispute(escrowId)` | Read `DisputeData` (or `null`) |
-| `get_escrows_by_buyer(buyer)` / `get_escrows_by_vendor(vendor)` | List escrow ids for an address |
+| `get_escrows_by_buyer(buyer)` | List escrow ids for a buyer |
+| `get_escrows_by_vendor(vendor, start, limit)` | One page (max 50, ascending) of escrow ids for a vendor |
 | `get_stats()` / `get_public_config()` / `get_fee_config()` | Read aggregate/config state |
 
 ### React hooks

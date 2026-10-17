@@ -549,9 +549,12 @@ export class EscrowClient {
     return this.transport.invoke("get_escrows_by_buyer", [buyer]);
   }
 
-  /** Ids of every escrow where `vendor` (seller/payee) is a recipient. Read-only. */
-  get_escrows_by_vendor(vendor: AddressLike): Call<bigint[]> {
-    return this.transport.invoke("get_escrows_by_vendor", [vendor]);
+  /**
+   * One page of escrow ids where `vendor` (seller/payee) is a recipient, in
+   * ascending (creation) order. `limit` is capped on-chain at 50. Read-only.
+   */
+  get_escrows_by_vendor(vendor: AddressLike, start: bigint, limit: bigint): Call<bigint[]> {
+    return this.transport.invoke("get_escrows_by_vendor", [vendor, start, limit]);
   }
 
   /** Aggregate lifecycle counters ({@link ContractStats}). Read-only. */
