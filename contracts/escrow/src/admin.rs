@@ -1611,6 +1611,14 @@ impl Escrow {
         Ok(())
     }
 
+    /// Test-only: sets the protocol fee directly, bypassing the timelock.
+    ///
+    /// Gated behind `cfg(any(test, feature = "testutils"))` and therefore
+    /// **never part of a production build**; the production fee path is the
+    /// timelocked `queue_*`/`execute_*` flow. To keep test behaviour from
+    /// drifting from production it enforces the same ceilings: the per-fee
+    /// `MAX_PROTOCOL_FEE_BPS` cap and the combined protocol + arbitration cap
+    /// (`validate_combined_fees`).
     #[cfg(any(test, feature = "testutils"))]
     pub fn set_fee(env: Env, caller: Address, fee: u32) -> Result<(), ContractError> {
         let admin = require_admin(&env)?;
@@ -1622,11 +1630,16 @@ impl Escrow {
             return Err(ContractError::ProtocolFeeExceedsMax);
         }
         let mut config = read_fee_config(&env);
+        validate_combined_fees(fee, config.arbitration_fee_bps)?;
         config.protocol_fee_bps = fee;
         write_fee_config(&env, &config);
         Ok(())
     }
 
+    /// Test-only: like `set_fee`, but also emits `protocol_fee_updated`.
+    ///
+    /// Same cfg-gating and the same per-fee and combined-fee ceilings as
+    /// `set_fee`; never part of a production build.
     #[cfg(any(test, feature = "testutils"))]
     pub fn set_protocol_fee(env: Env, caller: Address, fee: u32) -> Result<(), ContractError> {
         let admin = require_admin(&env)?;
@@ -1638,6 +1651,7 @@ impl Escrow {
             return Err(ContractError::ProtocolFeeExceedsMax);
         }
         let mut config = read_fee_config(&env);
+        validate_combined_fees(fee, config.arbitration_fee_bps)?;
         let old_fee = config.protocol_fee_bps;
         config.protocol_fee_bps = fee;
         write_fee_config(&env, &config);

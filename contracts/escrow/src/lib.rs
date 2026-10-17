@@ -78,8 +78,11 @@ const MAX_ARBITRATION_FEE_BPS: u32 = 500;
 /// Maximum protocol fee in basis points (500 = 5%).
 ///
 /// `set_fee` and `set_protocol_fee` reject any value above this with
-/// `FeeExceedsMax`, and it feeds the combined fee cap together with the
-/// arbitration fee.
+/// `ProtocolFeeExceedsMax`, and also enforce the combined cap
+/// (`MAX_COMBINED_FEE_BPS`) together with the arbitration fee.
+///
+/// This constant and both setters are cfg-gated to `test` / `testutils`
+/// builds and never ship in the production contract.
 #[cfg(any(test, feature = "testutils"))]
 const MAX_PROTOCOL_FEE_BPS: u32 = 500;
 
