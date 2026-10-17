@@ -66,8 +66,15 @@ impl Escrow {
     }
 
     /// Returns the full state transition history for an escrow as
-    /// `(state, ledger_timestamp)` pairs, oldest first. Returns
-    /// `EscrowNotFound` if the escrow does not exist.
+    /// `(state, ledger_timestamp)` pairs, oldest first.
+    ///
+    /// Outcomes:
+    /// - missing escrow => `EscrowNotFound` (never an empty `Vec`);
+    /// - existing escrow => a **non-empty** `Vec`, because creation records a
+    ///   `Pending` entry via `append_state_history`, so a freshly created
+    ///   escrow always starts with `Pending`. Once an escrow has accumulated
+    ///   more than `MAX_STATE_HISTORY_ENTRIES` transitions the oldest entries
+    ///   are pruned, so `Pending` is only guaranteed first until that cap.
     pub fn get_state_history(
         env: Env,
         escrow_id: u64,
